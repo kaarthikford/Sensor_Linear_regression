@@ -1,0 +1,81 @@
+#Following is the structure of snippet prepared on my own and 
+I am done with part of the assignment alone.If I get some more time I can able to analyse 
+and give the complete document. Nevertheless I tried to the level of my best as I am
+new to this environment of NoSQL and Python. I am pretty good in MySQL, R and Tableau
+for data science.
+
+
+#Import necessary packages for loading the data from mongodb
+!pip install pymongo
+!pip install pandas
+!pip install json
+!pip install sklearn
+!pip install numpy
+!pip install matplotlib
+!pip install matplotlib.pyplot
+!pip install seaborn
+!pip install statsmodel.api
+
+#Import necessary packages
+import pymongo
+import pandas
+import json
+import pprint
+import datetime from pandas
+import numpy
+import matplotlib
+import matplotlib.pyplot
+import seaborn
+import statsmodels.api
+
+
+#Connect to the collection in mongodb
+mongo_uri="mongodb://localhost:27017/"
+client=pymongo.MongoClient(mongo_uri)
+db=client.Assignment(#dbname).sensor_data(#collectionname)
+
+#Query to get the structured data
+db1=db.aggregate([{
+    "$unwind": "$data"
+},
+    {
+        "$match": {"data.timestamp": { "$gt": datetime(2018,1,1,0,0,15),"$lt": datetime(2018,1,2,0,0,15)} } },
+  { "$group":{"_id": {"data":"$data.timestamp","val":"$data.value","sensor":"$sensor_name"} } 
+  },
+  {
+      "$unwind": "$_id"
+  },
+    {"$out":"r2"}
+])
+
+#Export the file as json(optional)
+Using Mongodb compass
+Export the result collection "r2" as json file 
+
+(or)
+
+#Export the file as csv(optional)
+mongoexport --db Assignment --collection sensor_data --type=csv --fields=_id --query='{ "data","val","sensor"}' --out=data/final.csv
+
+(or)
+
+#Convert the collection to list
+cursor_list = list(client.Assignment.r2.aggregate([{"$unwind":"$_id"},{"$project":{"data":1,"val":1,"sensor":1}}]))
+df=DataFrame(cursor_list)
+df1 = pd.DataFrame(df, columns = ['time','val','sensor'])
+pd.pivot_table(df1, index='_id', columns='type', aggfunc=len, fill_value=0)
+X = df1.drop("sensor$Pump Radial Bearing Vibration",1)   #Feature Matrix
+y = df1["sensor$Pump Radial Bearing Vibration"]          #Target Variable
+df.head()
+
+#Using Pearson Correlation
+plt.figure(figsize=(12,10))
+cor = df.corr()
+sns.heatmap(cor, annot=True, cmap=plt.cm.Reds)
+plt.show()
+
+#Correlation with output variable
+cor_target = abs(cor["Pump Radial Bearing Vibration"])
+#Selecting highly correlated features
+relevant_features = cor_target[cor_target>0.5]
+relevant_features
